@@ -1,52 +1,46 @@
 # ======================================================
-#   Imagen base de Python (Render usa 3.10 estable)
+# Imagen base ligera
 # ======================================================
 FROM python:3.10-slim
 
-# ======================================================
-#   Directorio de trabajo
-# ======================================================
-WORKDIR /app
+# Evitar prompts interactivos
+ENV DEBIAN_FRONTEND=noninteractive
 
 # ======================================================
-#   Instalar dependencias del sistema necesarias
-#   para geopandas, fiona, shapely, gdal, etc.
+# Instalar dependencias del sistema necesarias para GeoPandas y GDAL
 # ======================================================
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     build-essential \
     gdal-bin \
     libgdal-dev \
     python3-dev \
+    python3-gdal \
     && rm -rf /var/lib/apt/lists/*
 
 # ======================================================
-#   Copiar requerimientos
+# Establecer directorio de trabajo
+# ======================================================
+WORKDIR /app
+
+# ======================================================
+# Copiar los archivos de dependencias e instalar
 # ======================================================
 COPY requirements.txt .
-
-# 🔥 NUEVO PASO AÑADIDO 🔥
-# Esto asegura que pip esté instalado y actualizado ANTES
-# de ejecutar pip install (previene el error de 'No module named streamlit')
 RUN python3 -m ensurepip
 RUN python3 -m pip install --upgrade pip
-
-# ======================================================
-#   Instalar dependencias del proyecto
-# ======================================================
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # ======================================================
-#   Copiar el resto de los archivos del proyecto
+# Copiar el resto del proyecto
 # ======================================================
 COPY . .
 
 # ======================================================
-#   Exponer puerto dinámico (Render usa la variable $PORT)
+# Exponer el puerto (Render lo define dinámicamente)
 # ======================================================
 EXPOSE 8501
 
 # ======================================================
-#   Ejecutar la app Streamlit
+# Comando para ejecutar Streamlit
 # ======================================================
-CMD ["python3", "-m", "streamlit", "run", "app.py", "--server.port=${PORT}", "--server.address=0.0.0.0"]
-
+CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
