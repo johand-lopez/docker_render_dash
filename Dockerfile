@@ -1,21 +1,45 @@
-# Imagen base ligera de Python
+# ======================================================
+#   Imagen base ligera de Python
+# ======================================================
 FROM python:3.10-slim
 
-# Configuración para evitar problemas con logs
-ENV PYTHONUNBUFFERED=1
-
-# Crear directorio de trabajo dentro del contenedor
+# ======================================================
+#   Configurar directorio de trabajo
+# ======================================================
 WORKDIR /app
 
-# Copiar archivos de requisitos e instalarlos
+# ======================================================
+#   Instalar dependencias del sistema necesarias
+#   para geopandas, shapely, fiona, gdal, etc.
+# ======================================================
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gdal-bin \
+    libgdal-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ======================================================
+#   Copiar los archivos de requerimientos
+# ======================================================
 COPY requirements.txt .
+
+# ======================================================
+#   Instalar librerías de Python
+# ======================================================
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar todos los archivos del proyecto
+# ======================================================
+#   Copiar el resto de los archivos de la app
+# ======================================================
 COPY . .
 
-# Exponer el puerto 8501 (el de Streamlit)
+# ======================================================
+#   Exponer el puerto dinámico de Render
+# ======================================================
 EXPOSE 8501
 
-# Comando de inicio (Streamlit corre app.py)
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# ======================================================
+#   Comando de ejecución (Render asigna $PORT)
+# ======================================================
+CMD ["python", "-m", "streamlit", "run", "app.py", "--server.port=${PORT}", "--server.address=0.0.0.0"]
